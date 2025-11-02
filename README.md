@@ -1,4 +1,33 @@
 # CoverUP PDF Redaction Software
+---
+A fork of CoverUp using a different python UI library, PyQt6.
+## 🧪 Installation
+
+- Make sure you have uv installed: https://docs.astral.sh/uv/
+- Clone the repo: `git clone https://github.com/64MM4-KN1F3/CoverUP.git`
+- Sync packages:
+```shell
+cd CoverUp
+uv venv
+uv sync
+```
+## 🚀 Running the App
+
+The CoverUP application is now fully converted to PyQt6 and can be run with:
+```shell
+uv run coverup
+```
+The application includes all the enhanced features:
+
+- PDF redaction with rectangle drawing
+- OCR-based text search and redaction
+- Search across all pages or current page only
+- Regex pattern support
+- High/low quality output options
+- Undo functionality
+
+*The original readme follows:*
+---
 **CoverUP** is a free software, developed in Python, designed to provide a secure and straightforward method for redacting PDF files. It enables users to conceal sensitive text passages by overlaying them with black or white bars.
 
 Users can import PDF documents into CoverUP, which are then converted into images. This conversion process ensures that the text cannot be copied from the document or indexed without OCR, enhancing the security of your information. Additionally, invisible layers within the PDF are not converted, providing an extra layer of security.

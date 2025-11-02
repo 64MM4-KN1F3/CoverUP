@@ -1,3 +1,7 @@
+import pytesseract
+import cv2
+import numpy as np
+import re
 from PIL import Image, ImageDraw
 import io
 
@@ -11,6 +15,8 @@ class ImageContainer:
         self.height_in_pt = size[1]
         self.scaled_image = self.image
         self.zoom_factor = 100
+        self.search_results = []  # List of (bbox, text) tuples for search results
+        self.ocr_data = None  # Cached OCR data for performance
 
         #list of rectangles [[start_cords, end_coords, color, id], ...]
         self.rectangles = list() if rectangles == None else rectangles
@@ -100,3 +106,46 @@ class ImageContainer:
         except ValueError:
             pass
         return self
+
+    def search_text(self, search_term):
+        '''Search for text in the image using OCR and return bounding boxes'''
+        self.search_results = []
+        if not search_term:
+            return []
+
+        # If OCR data is not cached, perform OCR
+        if self.ocr_data is None:
+            # Convert PIL image to OpenCV format
+            opencv_image = cv2.cvtColor(np.array(self.image), cv2.COLOR_RGB2BGR)
+            # Use pytesseract to get detailed data about text locations
+            self.ocr_data = pytesseract.image_to_data(opencv_image, output_type=pytesseract.Output.DICT)
+
+        # Search for the term in the recognized text using regex
+        try:
+            pattern = re.compile(search_term, re.IGNORECASE)
+        except re.error:
+            # If regex compilation fails, fall back to literal string search
+            pattern = None
+
+        for i, text in enumerate(self.ocr_data['text']):
+            match = False
+            if pattern:
+                # Try regex matching
+                if pattern.search(text):
+                    match = True
+            else:
+                # Fall back to simple string matching
+                if search_term.lower() in text.lower():
+                    match = True
+
+            if match:
+                # Get bounding box coordinates
+                x, y, w, h = self.ocr_data['left'][i], self.ocr_data['top'][i], self.ocr_data['width'][i], self.ocr_data['height'][i]
+                # Store the bounding box and text
+                self.search_results.append(((x, y, x + w, y + h), text))
+
+        return self.search_results
+
+    def clear_search_results(self):
+        '''Clear all search results'''
+        self.search_results = []

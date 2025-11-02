@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QProgressBar
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QProgressBar, QComboBox
 from src.view.custom_graphics_view import CustomGraphicsView
 
 class MainWindow(QMainWindow):
@@ -26,6 +26,14 @@ class MainWindow(QMainWindow):
         self.delete_all_button = QPushButton('Delete All')
         self.color_button = QPushButton('Color')
         self.quality_button = QPushButton('Quality')
+        self.search_button = QPushButton('Search')
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText('Search text (supports regex)...')
+        self.search_input.setFixedWidth(150)
+        self.search_scope_combo = QComboBox()
+        self.search_scope_combo.addItems(['All pages', 'Current page'])
+        self.search_scope_combo.setCurrentText('All pages')
+        self.redact_search_button = QPushButton('Redact Found')
         self.prev_page_button = QPushButton('<')
         self.next_page_button = QPushButton('>')
         self.zoom_in_button = QPushButton('+')
@@ -41,6 +49,11 @@ class MainWindow(QMainWindow):
         toolbar_layout.addWidget(self.delete_all_button)
         toolbar_layout.addWidget(self.color_button)
         toolbar_layout.addWidget(self.quality_button)
+        toolbar_layout.addStretch()
+        toolbar_layout.addWidget(self.search_input)
+        toolbar_layout.addWidget(self.search_scope_combo)
+        toolbar_layout.addWidget(self.search_button)
+        toolbar_layout.addWidget(self.redact_search_button)
         toolbar_layout.addStretch()
         toolbar_layout.addWidget(self.prev_page_button)
         self.page_num_input = QLineEdit('1')
@@ -62,3 +75,7 @@ class MainWindow(QMainWindow):
         # Progress Bar
         self.progress_bar = QProgressBar()
         main_layout.addWidget(self.progress_bar)
+
+        # Search Results Label
+        self.search_results_label = QLabel("")
+        main_layout.addWidget(self.search_results_label)

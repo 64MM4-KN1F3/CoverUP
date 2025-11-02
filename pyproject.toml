@@ -1,0 +1,29 @@
+[project]
+name = "coverup"
+version = "0.3.0"
+description = "PDF redaction software"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "PyQt6>=6.0.0",
+    "pypdfium2>=4.0.0",
+    "Pillow>=9.0.0",
+    "fpdf>=1.7.0",
+    "pytesseract>=0.3.0",
+    "opencv-python>=4.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+coverup = "src.controller.controller:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

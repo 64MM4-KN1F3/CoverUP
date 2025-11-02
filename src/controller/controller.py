@@ -3,7 +3,7 @@ import pypdfium2 as pdfium
 from PIL import Image
 from fpdf import FPDF
 from datetime import datetime
-from PyQt6.QtWidgets import QApplication, QFileDialog, QGraphicsScene, QGraphicsRectItem, QMessageBox
+from PyQt6.QtWidgets import QApplication, QFileDialog, QGraphicsScene, QGraphicsRectItem, QMessageBox, QDialog, QVBoxLayout, QLabel, QRadioButton, QButtonGroup, QDialogButtonBox
 from PyQt6.QtGui import QPixmap, QImage, QColor, QBrush
 from PyQt6.QtCore import QRectF
 from src.view.view import MainWindow
@@ -19,6 +19,8 @@ class Controller:
         self._output_quality = 'high'
         self._view = MainWindow(self)
         self._view.graphics_view.setScene(self._scene)
+        self._search_mode = False
+        self._search_scope = 'all'  # 'all' or 'current'
         self._connect_signals()
 
     def _connect_signals(self):
@@ -36,6 +38,9 @@ class Controller:
         self._view.zoom_out_button.clicked.connect(self.zoom_out)
         self._view.about_button.clicked.connect(self.about)
         self._view.page_num_input.returnPressed.connect(self.go_to_page)
+        self._view.search_button.clicked.connect(self.search_text)
+        self._view.redact_search_button.clicked.connect(self.redact_search_results)
+        self._view.search_scope_combo.currentTextChanged.connect(self.update_search_scope)
 
     def open_file(self):
         filepath, _ = QFileDialog.getOpenFileName(
@@ -75,7 +80,7 @@ class Controller:
         image_container.scale_image()
         pil_image = image_container.scaled_image
 
-        qimage = QImage(pil_image.tobytes(), pil_image.width, pil_image.height, pil_image.format.upper())
+        qimage = QImage(pil_image.tobytes(), pil_image.width, pil_image.height, QImage.Format.Format_RGB888)
         pixmap = QPixmap.fromImage(qimage)
 
         self._scene.clear()
@@ -89,6 +94,15 @@ class Controller:
             rect_item = QGraphicsRectItem(QRectF(scaled_start[0], scaled_start[1], scaled_end[0] - scaled_start[0], scaled_end[1] - scaled_start[1]))
             rect_item.setBrush(QBrush(QColor(color)))
             self._scene.addItem(rect_item)
+
+        # Highlight search results
+        for bbox, text in image_container.search_results:
+            factor = image_container.zoom_factor / 100
+            scaled_bbox = (bbox[0] * factor, bbox[1] * factor, bbox[2] * factor, bbox[3] * factor)
+            highlight_item = QGraphicsRectItem(QRectF(scaled_bbox[0], scaled_bbox[1], scaled_bbox[2] - scaled_bbox[0], scaled_bbox[3] - scaled_bbox[1]))
+            highlight_item.setBrush(QBrush(QColor(255, 255, 0, 100)))  # Semi-transparent yellow
+            highlight_item.setPen(QColor(255, 255, 0))  # Yellow border
+            self._scene.addItem(highlight_item)
 
 
         self._view.graphics_view.fitInView(self._scene.itemsBoundingRect())
@@ -134,26 +148,49 @@ class Controller:
                 self._view.progress_bar.setValue(0)
                 out_pdf = FPDF(unit="pt")
                 out_pdf.set_creator('CoverUp PDF')
-                out_pdf.set_creation_date(datetime.today())
+                # Note: fpdf2 doesn't have set_creation_date method, metadata is set differently
+
+                import tempfile
+                import os
 
                 if export_current_page:
                     image_container = self._images[self._current_page]
-                    out_pdf.add_page(format=[image_container.width_in_pt, image_container.height_in_pt])
+                    out_pdf.add_page()
                     include_image = image_container.finalized_image() if self._output_quality == 'high' else image_container.finalized_image('JPEG', image_quality=75, scale=0.90)
-                    out_pdf.image(include_image, x=0, y=0, w=out_pdf.w)
+                    # Save PIL image to temp file for fpdf2
+                    if isinstance(include_image, Image.Image):
+                        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+                            include_image.save(tmp_file, format='PNG')
+                            temp_path = tmp_file.name
+                        try:
+                            out_pdf.image(temp_path, x=0, y=0, w=out_pdf.w)
+                        finally:
+                            os.unlink(temp_path)
+                    else:
+                        out_pdf.image(include_image, x=0, y=0, w=out_pdf.w)
                     self._view.progress_bar.setValue(100)
                 else:
                     total_pages = len(self._images)
                     for i, item in enumerate(self._images):
-                        out_pdf.add_page(format=[item.width_in_pt, item.height_in_pt])
+                        out_pdf.add_page()
                         include_image = item.finalized_image() if self._output_quality == 'high' else item.finalized_image('JPEG', image_quality=50, scale=0.80)
-                        out_pdf.image(include_image, x=0, y=0, w=out_pdf.w)
+                        # Save PIL image to temp file for fpdf2
+                        if isinstance(include_image, Image.Image):
+                            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+                                include_image.save(tmp_file, format='PNG')
+                                temp_path = tmp_file.name
+                            try:
+                                out_pdf.image(temp_path, x=0, y=0, w=out_pdf.w)
+                            finally:
+                                os.unlink(temp_path)
+                        else:
+                            out_pdf.image(include_image, x=0, y=0, w=out_pdf.w)
                         self._view.progress_bar.setValue(int((i + 1) * 100 / total_pages))
 
                 out_pdf.output(save_file_path)
                 self._view.progress_bar.setValue(0)
             except Exception as e:
-                QMessageBox.critical(self._view, "Error", f"An error occurred: {e}")
+                QMessageBox.critical(self._view, "Error", f"Failed to save PDF: {e}")
                 self._view.progress_bar.setValue(0)
 
 
@@ -223,8 +260,62 @@ class Controller:
         except ValueError:
             pass
 
-if __name__ == '__main__':
+    def search_text(self):
+        if not self._images:
+            return
+
+        search_term = self._view.search_input.text()
+        self._search_scope = self._view.search_scope_combo.currentText().lower().replace(' ', '')
+
+        total_matches = 0
+        if self._search_scope == 'currentpage':
+            matches = self._images[self._current_page].search_text(search_term)
+            total_matches = len(matches) if matches else 0
+            scope_text = "current page"
+        else:  # 'allpages'
+            for image_container in self._images:
+                matches = image_container.search_text(search_term)
+                if matches:
+                    total_matches += len(matches)
+            scope_text = "all pages"
+
+        # Update search results label
+        if total_matches > 0:
+            self._view.search_results_label.setText(f"Found {total_matches} match(es) on {scope_text}")
+        else:
+            self._view.search_results_label.setText(f"No matches found on {scope_text}")
+
+        self.update_view()
+
+    def update_search_scope(self):
+        """Update search scope when combo box changes"""
+        self._search_scope = self._view.search_scope_combo.currentText().lower().replace(' ', '')
+
+    def redact_search_results(self):
+        if not self._images:
+            return
+
+        total_redacted = 0
+        for image_container in self._images:
+            for bbox, text in image_container.search_results:
+                # Convert bbox (x1,y1,x2,y2) to start and end points
+                start_point = (bbox[0], bbox[1])
+                end_point = (bbox[2], bbox[3])
+                image_container.draw_rectangle(start_point, end_point, self._fill_color)
+                total_redacted += 1
+            image_container.clear_search_results()
+
+        self._view.search_results_label.setText(f"Redacted {total_redacted} text region(s)")
+        self.update_view()
+
+
+# SearchOptionsDialog class is no longer needed since we use a combo box instead
+
+def main():
     app = QApplication(sys.argv)
     controller = Controller()
     controller._view.show()
     sys.exit(app.exec())
+
+if __name__ == '__main__':
+    main()
