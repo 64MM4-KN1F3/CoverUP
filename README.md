@@ -2,7 +2,7 @@
 ---
 A fork of CoverUp using a different python UI library, PyQt6.
 <p align="center">
-  <img src="./Screenshots/screenshot_PyQt6.png" style="width: 10vw; min-width: 800px;" />
+  <img src="./Screenshots/screenshot_PyQt6.png" style="width: 60vw; min-width: 800px;" />
 </p>
 ## 🧪 Installation
 
