@@ -12,6 +12,10 @@ dependencies = [
     "pytesseract>=0.3.0",
     "opencv-python-headless>=4.0.0",
     "pypdfium2>=4.0.0",
+    "pre-commit>=3.5.0",
+    "pre-commit-hooks>=5.0.0",
+    "detect-secrets>=1.5.0",
+    "opencv-python>=4.12.0.88",
 ]
 
 [build-system]
