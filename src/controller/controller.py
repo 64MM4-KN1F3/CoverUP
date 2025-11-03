@@ -38,6 +38,7 @@ class Controller:
         self._view.zoom_out_button.clicked.connect(self.zoom_out)
         self._view.about_button.clicked.connect(self.about)
         self._view.page_num_input.returnPressed.connect(self.go_to_page)
+        self._view.search_input.returnPressed.connect(self.search_text)
         self._view.search_button.clicked.connect(self.search_text)
         self._view.redact_search_button.clicked.connect(self.redact_search_results)
         self._view.search_scope_combo.currentTextChanged.connect(self.update_search_scope)

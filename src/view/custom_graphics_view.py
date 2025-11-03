@@ -6,6 +6,7 @@ class CustomGraphicsView(QGraphicsView):
         super().__init__(scene)
         self._controller = controller
         self._start_point = None
+        self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
