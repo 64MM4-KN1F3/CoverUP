@@ -1,6 +1,9 @@
 # CoverUP PDF Redaction Software
 ---
 A fork of CoverUp using a different python UI library, PyQt6.
+<p align="center">
+  <img src="./Screenshots/screenshot_PyQt6.png" style="width: 10vw; min-width: 800px;" />
+</p>
 ## 🧪 Installation
 
 - Make sure you have uv installed: https://docs.astral.sh/uv/
