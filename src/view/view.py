@@ -370,11 +370,13 @@ class MainWindow(QMainWindow):
             'info': self.about_button,
         }
 
+        # Special handling for theme toggle button
+        theme_icon = 'sun_light' if self.current_theme == 'dark' else 'moon'
+        icon_path = os.path.join(icons_dir, f'{theme_icon}.svg')
+        self.theme_toggle_button.setIcon(QIcon(icon_path))
+
         # Set theme toggle button icon and text
-        if self.current_theme == 'dark':
-            self.theme_toggle_button.setText('☀️')
-        else:
-            self.theme_toggle_button.setText('🌙')
+        # Icons are set in the icon_map below
 
         # Apply icons to buttons
         for icon_name, button in icon_map.items():
