@@ -10,7 +10,8 @@ dependencies = [
     "Pillow>=9.0.0",
     "fpdf>=1.7.0",
     "pytesseract>=0.3.0",
-    "opencv-python>=4.0.0",
+    "opencv-python-headless>=4.0.0",
+    "pypdfium2>=4.0.0",
 ]
 
 [build-system]

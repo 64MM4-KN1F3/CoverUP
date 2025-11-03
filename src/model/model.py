@@ -146,6 +146,23 @@ class ImageContainer:
 
         return self.search_results
 
+    def ocr_search_text(self, bbox):
+        '''Perform OCR on a specified region of the image'''
+        try:
+            # Crop the image to the specified bounding box
+            cropped_image = self.image.crop(bbox)
+
+            # Convert PIL image to OpenCV format
+            opencv_image = cv2.cvtColor(np.array(cropped_image), cv2.COLOR_RGB2BGR)
+
+            # Use pytesseract to extract text from the cropped image
+            text = pytesseract.image_to_string(opencv_image)
+
+            return text.strip()
+        except Exception as e:
+            print(f"Error during OCR: {e}")
+            return ""
+
     def clear_search_results(self):
         '''Clear all search results'''
         self.search_results = []

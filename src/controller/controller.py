@@ -39,8 +39,38 @@ class Controller:
         self._view.about_button.clicked.connect(self.about)
         self._view.page_num_input.returnPressed.connect(self.go_to_page)
         self._view.search_button.clicked.connect(self.search_text)
+        self._view.ocr_search_button.clicked.connect(self.ocr_search)
         self._view.redact_search_button.clicked.connect(self.redact_search_results)
         self._view.search_scope_combo.currentTextChanged.connect(self.update_search_scope)
+
+    def ocr_search(self):
+        if not self._images:
+            return
+
+        image_container = self._images[self._current_page]
+        selected_items = self._scene.selectedItems()
+
+        if not selected_items:
+            QMessageBox.information(self._view, "OCR Search", "Please select a region to perform OCR on.")
+            return
+
+        # Assuming the first selected item is the region of interest
+        selection_rect = selected_items[0].rect()
+
+        # Convert the selection rectangle to image coordinates
+        factor = image_container.zoom_factor / 100
+        bbox = (
+            int(selection_rect.x() / factor),
+            int(selection_rect.y() / factor),
+            int((selection_rect.x() + selection_rect.width()) / factor),
+            int((selection_rect.y() + selection_rect.height()) / factor),
+        )
+
+        # Perform OCR on the selected region
+        ocr_text = image_container.ocr_search_text(bbox)
+
+        # Display the OCR text in a message box
+        QMessageBox.information(self._view, "OCR Result", ocr_text)
 
     def open_file(self):
         filepath, _ = QFileDialog.getOpenFileName(
