@@ -8,6 +8,10 @@ class CustomGraphicsView(QGraphicsView):
         self._start_point = None
         self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
 
+    def resizeEvent(self, event):
+        self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        super().resizeEvent(event)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             if self._controller._edit_mode == 'draw':

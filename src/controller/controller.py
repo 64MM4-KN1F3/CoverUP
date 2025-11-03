@@ -106,7 +106,6 @@ class Controller:
             self._scene.addItem(highlight_item)
 
 
-        self._view.graphics_view.fitInView(self._scene.itemsBoundingRect())
         self._view.page_num_input.setText(str(self._current_page + 1))
         self._view.total_pages_label.setText(f"/ {len(self._images)}")
 
