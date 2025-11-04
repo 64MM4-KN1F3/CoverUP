@@ -75,6 +75,8 @@ class ImageContainer:
     def finalized_image (self, format='PIL', image_quality=100, scale=1):
         '''Return a copy of the imported image with all the rectangles and in the requested format.'''
         final_image = self.draw_rectangles_on_image(self.image.copy())
+        if final_image.mode == 'RGBA':
+            final_image = final_image.convert('RGB')
         if format in ('JPEG','JPG'):
             return self.jpg(final_image.convert('RGB'), image_quality, scale)
         else:

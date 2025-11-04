@@ -81,6 +81,10 @@ class Controller:
         image_container.scale_image()
         pil_image = image_container.scaled_image
 
+        # Ensure the image is in a compatible format
+        if pil_image.mode != 'RGB':
+            pil_image = pil_image.convert('RGB')
+
         qimage = QImage(pil_image.tobytes(), pil_image.width, pil_image.height, QImage.Format.Format_RGB888)
         pixmap = QPixmap.fromImage(qimage)
 

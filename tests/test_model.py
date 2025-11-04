@@ -65,5 +65,16 @@ class TestImageContainer(unittest.TestCase):
         self.container.undo()
         self.assertEqual(len(self.container.rectangles), 0)
 
+    def test_finalized_image_with_rgba(self):
+        # Create an RGBA image
+        image = Image.new("RGBA", (100, 100), (255, 0, 0, 128))
+        container = ImageContainer(image, size=(100, 100))
+
+        # Get the finalized image
+        final_image = container.finalized_image()
+
+        # Check that the finalized image is in RGB format
+        self.assertEqual(final_image.mode, "RGB")
+
 if __name__ == '__main__':
     unittest.main()
